@@ -1,3 +1,7 @@
+use std::io::Read;
+use std::io::Write;
+use std::net::TcpListener;
+
 pub struct Express {/* TODO */}
 
 impl Express {
@@ -9,11 +13,19 @@ impl Express {
         F: FnMut(Request, Response) -> (),
         Self: Sized,
     {
-        todo!()
     }
 
     // TODO: Constraint data type to UNIX port specification
-    pub fn listen(&self, port: usize) {}
+    pub fn listen(&self, port: usize) {
+        let address = "0.0.0.0:".to_owned() + &port.to_string();
+        let listener = TcpListener::bind(address).unwrap();
+
+        for stream in listener.incoming() {
+            let mut buffer = [0; 1024];
+            stream.unwrap().read(&mut buffer).unwrap();
+            println!("Request: {}", String::from_utf8_lossy(&buffer[..]));
+        }
+    }
 }
 
 pub struct Request {/* TODO */}
