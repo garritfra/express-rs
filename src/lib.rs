@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use std::io::Read;
 use std::net::TcpListener;
 
@@ -9,7 +10,7 @@ impl Express {
     pub fn new() -> Self {
         Express { mounts: Vec::new() }
     }
-    pub fn get<F>(&mut self, path: &str, callback: F) -> &mut Self
+    pub fn get<F: 'static>(&mut self, path: &str, callback: F) -> &mut Self
     where
         F: FnMut(Request, Response) -> (),
         Self: Sized,
@@ -17,8 +18,9 @@ impl Express {
         let mount = Mount {
             method: Method::GET,
             path: path.to_string(),
+            callback: Box::new(callback),
         };
-        self.mounts.append(vec![&mount]);
+        self.mounts.push(mount);
 
         self
     }
@@ -33,6 +35,10 @@ impl Express {
             stream.unwrap().read(&mut buffer).unwrap();
             let request = Request::from_string(String::from_utf8_lossy(&buffer[..]).to_string());
 
+            for mount in &self.mounts {
+                if mount.path == request.path && mount.method == request.method {}
+            }
+
             println!("{:?}", request);
         }
     }
@@ -42,16 +48,26 @@ impl Express {
 pub struct Mount {
     pub method: Method,
     pub path: String,
+    callback: Box<dyn FnMut(Request, Response) -> ()>,
 }
 
-#[derive(Debug)]
+impl Debug for Mount {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        f.debug_struct("Mount")
+            .field("method", &self.method)
+            .field("path", &self.path)
+            .finish()
+    }
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Method {
     GET,
     UNKNOWN,
     // ...
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Request {
     method: Method,
     path: String,
