@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["garritfra <garritfranke@gmail.com>"]
 edition = "2018"
 description = "Express.js clone written in your favorite language"
-licence = "apache-2.0"
+license = "apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
