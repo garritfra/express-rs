@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 use std::io::Read;
+use std::io::Write;
 use std::net::TcpListener;
 
 pub struct Express {
@@ -12,7 +13,7 @@ impl Express {
     }
     pub fn get<F: 'static>(&mut self, path: &str, callback: F) -> &mut Self
     where
-        F: FnMut(Request, Response) -> (),
+        F: FnMut(&Request, &mut Response) -> (),
         Self: Sized,
     {
         let mount = Mount {
@@ -29,7 +30,7 @@ impl Express {
     ///
     /// # Panics
     /// Panics, if a port is not between 1-65535
-    pub fn listen(&self, port: u16) {
+    pub fn listen(&mut self, port: u16) {
         if port == 0 {
             panic!("Port must be between 1-65535")
         }
@@ -38,15 +39,25 @@ impl Express {
         let listener = TcpListener::bind(address).unwrap();
 
         for stream in listener.incoming() {
-            let mut buffer = [0; 1024];
-            stream.unwrap().read(&mut buffer).unwrap();
-            let request = Request::from_string(String::from_utf8_lossy(&buffer[..]).to_string());
+            if let Ok(mut stream) = stream {
+                let mut buffer = [0; 1024];
+                stream.read(&mut buffer).unwrap();
+                let request =
+                    Request::from_string(String::from_utf8_lossy(&buffer[..]).to_string());
+                let mut response = Response::new();
 
-            for mount in &self.mounts {
-                if mount.path == request.path && mount.method == request.method {}
+                for mount in &mut self.mounts {
+                    if mount.path == request.path && mount.method == request.method {
+                        (mount.callback)(&request, &mut response);
+                    }
+                }
+                stream.write("HTTP/1.1 200 OK\r\n\r\n".as_bytes()).unwrap();
+                stream.write(response.stream.as_bytes()).unwrap();
+                stream.flush().unwrap();
+
+                println!("Request: {:?}", request);
+                println!("Response: {:?}", response);
             }
-
-            println!("{:?}", request);
         }
     }
 }
@@ -55,7 +66,7 @@ impl Express {
 pub struct Mount {
     pub method: Method,
     pub path: String,
-    callback: Box<dyn FnMut(Request, Response) -> ()>,
+    pub callback: Box<dyn FnMut(&Request, &mut Response) -> ()>,
 }
 
 impl Debug for Mount {
@@ -111,11 +122,20 @@ impl Request {
     }
 }
 
-pub struct Response {/* TODO */}
+#[derive(Debug, PartialEq)]
+pub struct Response {
+    stream: String,
+}
 
 impl Response {
+    pub fn new() -> Self {
+        Self {
+            stream: String::new(),
+        }
+    }
+
     pub fn send(&mut self, s: String) {
-        println!("{}", s);
+        self.stream.push_str(&s);
     }
 }
 
@@ -127,7 +147,7 @@ mod tests {
     #[test]
     #[should_panic]
     fn port_out_of_range_min() {
-        let app = Express::new();
+        let mut app = Express::new();
         app.listen(0)
     }
 
@@ -136,7 +156,7 @@ mod tests {
         let (tx, rx) = channel();
 
         std::thread::spawn(move || {
-            let app = Express::new();
+            let mut app = Express::new();
             app.listen(65535);
 
             tx.send("Thread exited").unwrap()
