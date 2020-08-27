@@ -25,7 +25,7 @@ impl Express {
         self
     }
 
-    /// Port numbers can range from 0-65535, therefore a u16 is used here
+    /// Port numbers can range from 1-65535, therefore a u16 is used here
     pub fn listen(&self, port: u16) {
         let address = "0.0.0.0:".to_string() + &port.to_string();
         let listener = TcpListener::bind(address).unwrap();
