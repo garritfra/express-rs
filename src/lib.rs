@@ -26,7 +26,14 @@ impl Express {
     }
 
     /// Port numbers can range from 1-65535, therefore a u16 is used here
+    ///
+    /// # Panics
+    /// Panics, if a port is not between 1-65535
     pub fn listen(&self, port: u16) {
+        if port == 0 {
+            panic!("Port must be between 1-65535")
+        }
+
         let address = "0.0.0.0:".to_string() + &port.to_string();
         let listener = TcpListener::bind(address).unwrap();
 
