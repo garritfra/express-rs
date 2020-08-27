@@ -1,4 +1,3 @@
-use crate::Method::GET;
 use std::io::Read;
 use std::net::TcpListener;
 
@@ -30,7 +29,7 @@ impl Express {
 }
 
 #[derive(Debug)]
-enum Method {
+pub enum Method {
     GET,
     UNKNOWN,
     // ...
