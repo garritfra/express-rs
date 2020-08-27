@@ -7,6 +7,18 @@ pub struct Express {
     mounts: Vec<Mount>,
 }
 
+/// This macro saves a ton of work when adding new HTTP methods.
+/// It generates struct methods that specify the HTTP method, path, and callback.define_method!
+///
+/// # Examples
+/// ```
+/// define_method!(get, Method::GET);
+///
+/// // exposes
+///
+/// app.get("/", |req, res| res.send("Hello"))
+///
+/// ```
 macro_rules! define_method {
     ($func_name:ident, $method:expr) => {
         pub fn $func_name<F: 'static>(&mut self, path: &str, callback: F) -> &mut Self
@@ -25,6 +37,10 @@ macro_rules! define_method {
     };
 }
 
+/// Main application object
+///
+/// Provides ways to mount path and method combinations
+/// and assign functions to them.
 impl Express {
     pub fn new() -> Self {
         Express { mounts: Vec::new() }
@@ -72,7 +88,7 @@ impl Express {
     }
 }
 
-/// Mounts are essentially REST routes. They define a method and a path
+/// Represents a path with a method.
 pub struct Mount {
     pub method: Method,
     pub path: String,
@@ -88,6 +104,10 @@ impl Debug for Mount {
     }
 }
 
+/// Common HTTP Methods
+///
+/// If a method is needed, which is not specified here,
+/// `Method::UNKNOWN(String)` can be used
 #[derive(Debug, PartialEq)]
 pub enum Method {
     GET,
@@ -98,6 +118,7 @@ pub enum Method {
     UNKNOWN(String),
 }
 
+/// Represents a HTTP request
 #[derive(Debug, PartialEq)]
 pub struct Request {
     method: Method,
@@ -106,6 +127,7 @@ pub struct Request {
 }
 
 impl Request {
+    /// takes an request as string and parses all relevant fields
     pub fn from_string(b: String) -> Self {
         let fields: Vec<&str> = b.split_whitespace().collect();
         Request {
@@ -123,18 +145,22 @@ impl Request {
     }
 }
 
+/// Represents a HTTP response
 #[derive(Debug, PartialEq)]
 pub struct Response {
     stream: String,
+    headers: Vec<String>,
 }
 
 impl Response {
     pub fn new() -> Self {
         Self {
             stream: String::new(),
+            headers: Vec::new(),
         }
     }
 
+    /// Writes plain text to the response buffer
     pub fn send(&mut self, s: String) {
         self.stream.push_str(&s);
     }
