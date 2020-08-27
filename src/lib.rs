@@ -25,9 +25,9 @@ impl Express {
         self
     }
 
-    // TODO: Constraint data type to UNIX port specification
-    pub fn listen(&self, port: usize) {
-        let address = "0.0.0.0:".to_owned() + &port.to_string();
+    /// Port numbers can range from 0-65535, therefore a u16 is used here
+    pub fn listen(&self, port: u16) {
+        let address = "0.0.0.0:".to_string() + &port.to_string();
         let listener = TcpListener::bind(address).unwrap();
 
         for stream in listener.incoming() {
