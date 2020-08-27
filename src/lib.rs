@@ -1,17 +1,26 @@
 use std::io::Read;
 use std::net::TcpListener;
 
-pub struct Express {/* TODO */}
+pub struct Express {
+    mounts: Vec<Mount>,
+}
 
 impl Express {
     pub fn new() -> Self {
-        Express {}
+        Express { mounts: Vec::new() }
     }
-    pub fn get<F>(&mut self, path: &str, callback: F)
+    pub fn get<F>(&mut self, path: &str, callback: F) -> &mut Self
     where
         F: FnMut(Request, Response) -> (),
         Self: Sized,
     {
+        let mount = Mount {
+            method: Method::GET,
+            path: path.to_string(),
+        };
+        self.mounts.append(vec![&mount]);
+
+        self
     }
 
     // TODO: Constraint data type to UNIX port specification
@@ -23,9 +32,16 @@ impl Express {
             let mut buffer = [0; 1024];
             stream.unwrap().read(&mut buffer).unwrap();
             let request = Request::from_string(String::from_utf8_lossy(&buffer[..]).to_string());
-            println!("Request: {:?}", request);
+
+            println!("{:?}", request);
         }
     }
+}
+
+/// Mounts are essentially REST routes. They define a method and a path
+pub struct Mount {
+    pub method: Method,
+    pub path: String,
 }
 
 #[derive(Debug)]
