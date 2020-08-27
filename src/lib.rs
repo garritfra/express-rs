@@ -7,24 +7,34 @@ pub struct Express {
     mounts: Vec<Mount>,
 }
 
+macro_rules! define_method {
+    ($func_name:ident, $method:expr) => {
+        pub fn $func_name<F: 'static>(&mut self, path: &str, callback: F) -> &mut Self
+        where
+            F: FnMut(&Request, &mut Response) -> (),
+            Self: Sized,
+        {
+            let mount = Mount {
+                method: $method,
+                path: path.to_string(),
+                callback: Box::new(callback),
+            };
+            self.mounts.push(mount);
+            self
+        }
+    };
+}
+
 impl Express {
     pub fn new() -> Self {
         Express { mounts: Vec::new() }
     }
-    pub fn get<F: 'static>(&mut self, path: &str, callback: F) -> &mut Self
-    where
-        F: FnMut(&Request, &mut Response) -> (),
-        Self: Sized,
-    {
-        let mount = Mount {
-            method: Method::GET,
-            path: path.to_string(),
-            callback: Box::new(callback),
-        };
-        self.mounts.push(mount);
 
-        self
-    }
+    define_method!(get, Method::GET);
+    define_method!(post, Method::POST);
+    define_method!(put, Method::PUT);
+    define_method!(delete, Method::DELETE);
+    define_method!(patch, Method::PATCH);
 
     /// Port numbers can range from 1-65535, therefore a u16 is used here
     ///
@@ -81,8 +91,11 @@ impl Debug for Mount {
 #[derive(Debug, PartialEq)]
 pub enum Method {
     GET,
-    UNKNOWN,
-    // ...
+    POST,
+    PUT,
+    PATCH,
+    DELETE,
+    UNKNOWN(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -98,7 +111,11 @@ impl Request {
         Request {
             method: match fields.get(0).unwrap() {
                 &"GET" => Method::GET,
-                _ => Method::UNKNOWN,
+                &"POST" => Method::POST,
+                &"PUT" => Method::PUT,
+                &"PATCH" => Method::PATCH,
+                &"DELETE" => Method::DELETE,
+                method => Method::UNKNOWN(method.to_string()),
             },
             path: fields.get(1).unwrap().to_string(),
             version: fields.get(2).unwrap().to_string(),
