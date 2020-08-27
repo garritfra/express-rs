@@ -92,22 +92,6 @@ pub struct Request {
     version: String,
 }
 
-/*
-Request: GET / HTTP/1.1
-Host: localhost:8080
-Connection: keep-alive
-Cache-Control: max-age=0
-Upgrade-Insecure-Requests: 1
-User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.135 Safari/537.36
-Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng
-Sec-Fetch-Site: cross-site
-Sec-Fetch-Mode: navigate
-Sec-Fetch-Dest: document
-Accept-Encoding: gzip, deflate, br
-Accept-Language: en-CA,en;q=0.9,de-DE;q=0.8,de;q=0.7,en-GB;q=0.6,en-US;q=0.5,la;q=0.4
-Cookie: _ga=GA1.1.783631210.1557768372
-*/
-
 impl Request {
     pub fn from_string(b: String) -> Self {
         let fields: Vec<&str> = b.split_whitespace().collect();
