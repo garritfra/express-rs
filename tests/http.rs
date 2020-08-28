@@ -25,4 +25,11 @@ mod tests {
         assert_eq!(request.version, "HTTP/1.1".to_string());
         assert_eq!(request.body, Some("this is the body".to_string()));
     }
+
+    #[test]
+    fn request_from_string_invalid() {
+        let string = "GET".to_string();
+        let request = http::Request::from_string(string);
+        assert_eq!(request.is_err(), true);
+    }
 }
