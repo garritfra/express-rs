@@ -4,7 +4,13 @@ This crate emulates the behavior of the Express.js framework for Rust.
 
 ## State of the Project
 
-Very early WIP!
+- [x] Simple GET/POST/PUT/DELETE requests
+- [x] Body parsing
+- [ ] proper HTML rendering
+- [ ] Dynamic query and route params
+- [ ] Request configuration (headers etc)
+- [ ] Status codes
+- [ ] Parallel request handling
 
 ## Example
 
