@@ -18,12 +18,18 @@ pub struct Request {
     pub method: Method,
     pub path: String,
     pub version: String,
+    pub body: Option<String>,
 }
 
 impl Request {
     /// takes an request as string and parses all relevant fields
     pub fn from_string(b: String) -> Self {
         let fields: Vec<&str> = b.split_whitespace().collect();
+        let body: Option<String> = b
+            .split("\r\n\r\n")
+            .collect::<Vec<&str>>()
+            .last()
+            .map(|s| s.to_string());
         Request {
             method: match fields.get(0).unwrap() {
                 &"GET" => Method::GET,
@@ -35,6 +41,7 @@ impl Request {
             },
             path: fields.get(1).unwrap().to_string(),
             version: fields.get(2).unwrap().to_string(),
+            body,
         }
     }
 }

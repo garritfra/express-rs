@@ -1,4 +1,4 @@
-mod http;
+pub mod http;
 
 use http::{Method, Request, Response};
 use std::fmt::Debug;
