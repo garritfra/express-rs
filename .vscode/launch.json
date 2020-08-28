@@ -1,0 +1,139 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'express-rs'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=express-rs"
+                ],
+                "filter": {
+                    "name": "express-rs",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'get'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=get",
+                    "--package=express-rs"
+                ],
+                "filter": {
+                    "name": "get",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'get'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=get",
+                    "--package=express-rs"
+                ],
+                "filter": {
+                    "name": "get",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug example 'body'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--example=body",
+                    "--package=express-rs"
+                ],
+                "filter": {
+                    "name": "body",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in example 'body'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--example=body",
+                    "--package=express-rs"
+                ],
+                "filter": {
+                    "name": "body",
+                    "kind": "example"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'test_lib'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=test_lib",
+                    "--package=express-rs"
+                ],
+                "filter": {
+                    "name": "test_lib",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'http'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=http",
+                    "--package=express-rs"
+                ],
+                "filter": {
+                    "name": "http",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

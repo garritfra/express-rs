@@ -26,11 +26,7 @@ impl Request {
     pub fn from_string(b: String) -> Result<Self, &'static str> {
         let result = std::panic::catch_unwind(|| {
             let fields: Vec<&str> = b.split_whitespace().collect();
-            let body: Option<String> = b
-                .split("\r\n\r\n")
-                .collect::<Vec<&str>>()
-                .last()
-                .map(|s| s.to_string());
+            let body: Option<String> = b.split("\r\n\r\n").nth(1).map(|s| s.to_string());
 
             let method = match fields.get(0).unwrap() {
                 &"GET" => Method::GET,
