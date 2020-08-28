@@ -30,17 +30,23 @@ impl Request {
             .collect::<Vec<&str>>()
             .last()
             .map(|s| s.to_string());
+
+        let method = match fields.get(0).unwrap() {
+            &"GET" => Method::GET,
+            &"POST" => Method::POST,
+            &"PUT" => Method::PUT,
+            &"PATCH" => Method::PATCH,
+            &"DELETE" => Method::DELETE,
+            method => Method::UNKNOWN(method.to_string()),
+        };
+
+        let path = fields.get(1).unwrap().to_string();
+        let version = fields.get(2).unwrap().to_string();
+
         Request {
-            method: match fields.get(0).unwrap() {
-                &"GET" => Method::GET,
-                &"POST" => Method::POST,
-                &"PUT" => Method::PUT,
-                &"PATCH" => Method::PATCH,
-                &"DELETE" => Method::DELETE,
-                method => Method::UNKNOWN(method.to_string()),
-            },
-            path: fields.get(1).unwrap().to_string(),
-            version: fields.get(2).unwrap().to_string(),
+            method,
+            path,
+            version,
             body,
         }
     }
