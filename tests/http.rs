@@ -16,7 +16,7 @@ mod tests {
 
     #[test]
     fn request_from_string_valid_with_body() {
-        let string = "GET / HTTP/1.1\n\r\n\rthis is the body".to_string();
+        let string = "GET / HTTP/1.1\r\n\r\nthis is the body".to_string();
 
         let request = http::Request::from_string(string).unwrap();
 
