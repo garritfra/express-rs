@@ -73,19 +73,23 @@ impl Express {
                 stream.read(&mut buffer).unwrap();
                 let request =
                     Request::from_string(String::from_utf8_lossy(&buffer[..]).to_string());
-                let mut response = Response::new();
 
-                for mount in &mut self.mounts {
-                    if mount.path == request.path && mount.method == request.method {
-                        (mount.callback)(&request, &mut response);
+                let mut response = Response::new();
+                if let Ok(request) = request {
+                    for mount in &mut self.mounts {
+                        if mount.path == request.path && mount.method == request.method {
+                            (mount.callback)(&request, &mut response);
+                        }
                     }
+                    stream.write("HTTP/1.1 200 OK\r\n\r\n".as_bytes()).unwrap();
+                } else {
+                    stream
+                        .write("HTTP/1.1 400 Bad Request\r\n\r\n".as_bytes())
+                        .unwrap();
+                    println!("Request could not be handled");
                 }
-                stream.write("HTTP/1.1 200 OK\r\n\r\n".as_bytes()).unwrap();
                 stream.write(response.stream.as_bytes()).unwrap();
                 stream.flush().unwrap();
-
-                println!("Request: {:?}", request);
-                println!("Response: {:?}", response);
             }
         }
     }
