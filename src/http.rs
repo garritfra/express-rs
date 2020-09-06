@@ -26,7 +26,10 @@ impl Request {
     pub fn from_string(b: String) -> Result<Self, &'static str> {
         let result = std::panic::catch_unwind(|| {
             let fields: Vec<&str> = b.split_whitespace().collect();
-            let body: Option<String> = b.split("\r\n\r\n").nth(1).map(|s| s.to_string());
+
+            // RFC 7230 Section 3: Body begins after two CRLF (\r\n) sequences.
+            // See: https://tools.ietf.org/html/rfc7230#section-3
+            let body: String = b.split("\r\n\r\n").skip(1).collect::<String>();
 
             let method = match fields.get(0).unwrap() {
                 &"GET" => Method::GET,
@@ -44,7 +47,7 @@ impl Request {
                 method,
                 path,
                 version,
-                body,
+                body: if body.is_empty() { None } else { Some(body) },
             }
         });
 
