@@ -1,6 +1,6 @@
 [package]
 name = "express-rs"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["garritfra <garritfranke@gmail.com>"]
 edition = "2018"
 repository = "https://github.com/garritfra/express-rs/"
