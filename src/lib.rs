@@ -58,19 +58,26 @@ impl Express {
     /// Port numbers can range from 1-65535, therefore a u16 is used here
     ///
     /// # Panics
-    /// Panics, if a port is not between 1-65535
+    /// Panics, if:
+    /// - a port is not between 1-65535 or
+    /// - address on host is already in use
     pub fn listen(&mut self, port: u16) {
         if port == 0 {
             panic!("Port must be between 1-65535")
         }
 
         let address = "0.0.0.0:".to_string() + &port.to_string();
-        let listener = TcpListener::bind(address).unwrap();
+        let listener = match TcpListener::bind(address) {
+            Ok(l) => l,
+            Err(e) => panic!("Could not bind to port {port}: {e}", port = port, e = e),
+        };
 
         for stream in listener.incoming() {
             if let Ok(mut stream) = stream {
                 let mut buffer = [0; 1024];
-                stream.read(&mut buffer).unwrap();
+                if let Err(e) = stream.read(&mut buffer) {
+                    println!("Could not read to stream: {}", e)
+                }
                 let request =
                     Request::from_string(String::from_utf8_lossy(&buffer[..]).to_string());
 
@@ -81,15 +88,23 @@ impl Express {
                             (mount.callback)(&request, &mut response);
                         }
                     }
-                    stream.write("HTTP/1.1 200 OK\r\n\r\n".as_bytes()).unwrap();
+                    if let Err(e) = stream.write("HTTP/1.1 200 OK\r\n\r\n".as_bytes()) {
+                        println!("Could not write to response stream: {}", e)
+                    }
                 } else {
-                    stream
-                        .write("HTTP/1.1 400 Bad Request\r\n\r\n".as_bytes())
-                        .unwrap();
+                    if let Err(e) = stream.write("HTTP/1.1 400 Bad Request\r\n\r\n".as_bytes()) {
+                        println!("Could not write to response stream: {}", e)
+                    }
                     println!("Request could not be handled");
                 }
-                stream.write(response.stream.as_bytes()).unwrap();
-                stream.flush().unwrap();
+
+                if let Err(e) = stream.write(response.stream.as_bytes()) {
+                    println!("Could not write to response stream: {}", e)
+                }
+
+                if let Err(e) = stream.flush() {
+                    println!("Could not flush response stream: {}", e)
+                }
             }
         }
     }
