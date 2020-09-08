@@ -55,4 +55,14 @@ mod tests {
         let header = request.headers.get(&"Content-Type".to_string());
         assert_eq!(header, Some(&"text/plain".to_string()));
     }
+
+    /// Missing colon should render the request invalid
+    #[test]
+    fn request_from_string_headers_invalid() {
+        let string =
+            "GET / HTTP/1.1\r\nContent-Type text/plain \r\n\r\nthis is the body".to_string();
+        let request = http::Request::from_string(string);
+
+        assert_eq!(request.is_err(), true);
+    }
 }
