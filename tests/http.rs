@@ -32,4 +32,27 @@ mod tests {
         let request = http::Request::from_string(string);
         assert_eq!(request.is_err(), true);
     }
+
+    #[test]
+    fn request_from_string_headers_valid() {
+        let string =
+            "GET / HTTP/1.1\r\nContent-Type: text/plain\r\n\r\nthis is the body".to_string();
+        let request = http::Request::from_string(string).unwrap();
+
+        let header = request.headers.get(&"Content-Type".to_string());
+        assert_eq!(header, Some(&"text/plain".to_string()));
+    }
+
+    /// The space after the colon and after the end of line are optional white space (OWS)
+    /// and should therefore be parsed as such.
+    /// See: https://tools.ietf.org/html/rfc7230#section-3.2
+    #[test]
+    fn request_from_string_headers_weird_spacing() {
+        let string =
+            "GET / HTTP/1.1\r\nContent-Type:text/plain \r\n\r\nthis is the body".to_string();
+        let request = http::Request::from_string(string).unwrap();
+
+        let header = request.headers.get(&"Content-Type".to_string());
+        assert_eq!(header, Some(&"text/plain".to_string()));
+    }
 }
