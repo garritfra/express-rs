@@ -1,3 +1,5 @@
+use std::collections::hash_map::HashMap;
+
 /// Common HTTP Methods
 ///
 /// If a method is needed, which is not specified here,
@@ -19,6 +21,7 @@ pub struct Request {
     pub path: String,
     pub version: String,
     pub body: Option<String>,
+    pub headers: HashMap<String, String>,
 }
 
 impl Request {
@@ -48,8 +51,37 @@ impl Request {
                 path,
                 version,
                 body: if body.is_empty() { None } else { Some(body) },
+                headers: parse_headers(&b),
             }
         });
+
+        fn parse_headers(s: &String) -> HashMap<String, String> {
+            // RFC 7230 Section 3: Header section (start-line) ends, when two CRLF (\r\n) sequences are encountered.
+            // See: https://tools.ietf.org/html/rfc7230#section-3
+            let raw_header_section: &str = s.split("\r\n\r\n").nth(0).unwrap_or("");
+
+            // RFC 7230 Section 3.2: Each header is separated by one CRLF.
+            // See: https://tools.ietf.org/html/rfc7230#section-3.2
+            let raw_headers: Vec<&str> = raw_header_section.split("\r\n").skip(1).collect();
+            let mut map = HashMap::new();
+
+            for header in raw_headers {
+                let sections: Vec<&str> = header.split(":").collect();
+                let field_name = sections.get(0);
+                let field_value = sections.get(1);
+
+                if let Some(field_name) = field_name {
+                    if let Some(field_value) = field_value {
+                        map.insert(
+                            field_name.to_string().split_whitespace().collect(),
+                            field_value.to_string().split_whitespace().collect(),
+                        );
+                    }
+                }
+            }
+
+            map
+        }
 
         // FIXME: This could be prettier
         if result.is_err() {
