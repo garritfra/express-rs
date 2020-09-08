@@ -28,68 +28,80 @@ impl Request {
     /// takes an request as string and parses all relevant fields
     pub fn from_string(b: String) -> Result<Self, &'static str> {
         let result = std::panic::catch_unwind(|| {
-            let fields: Vec<&str> = b.split_whitespace().collect();
-
-            // RFC 7230 Section 3: Body begins after two CRLF (\r\n) sequences.
-            // See: https://tools.ietf.org/html/rfc7230#section-3
-            let body: String = b.split("\r\n\r\n").skip(1).collect::<String>();
-
-            let method = match fields.get(0).unwrap() {
-                &"GET" => Method::GET,
-                &"POST" => Method::POST,
-                &"PUT" => Method::PUT,
-                &"PATCH" => Method::PATCH,
-                &"DELETE" => Method::DELETE,
-                method => Method::UNKNOWN(method.to_string()),
-            };
-
-            let path = fields.get(1).unwrap().to_string();
-            let version = fields.get(2).unwrap().to_string();
-
+            let body: String = parse_body(&b);
             Request {
-                method,
-                path,
-                version,
+                method: parse_method(&b),
+                path: parse_path(&b),
+                version: parse_version(&b),
                 body: if body.is_empty() { None } else { Some(body) },
                 headers: parse_headers(&b),
             }
         });
 
-        fn parse_headers(s: &String) -> HashMap<String, String> {
-            // RFC 7230 Section 3: Header section (start-line) ends, when two CRLF (\r\n) sequences are encountered.
-            // See: https://tools.ietf.org/html/rfc7230#section-3
-            let raw_header_section: &str = s.split("\r\n\r\n").nth(0).unwrap_or("");
-
-            // RFC 7230 Section 3.2: Each header is separated by one CRLF.
-            // See: https://tools.ietf.org/html/rfc7230#section-3.2
-            let raw_headers: Vec<&str> = raw_header_section.split("\r\n").skip(1).collect();
-            let mut map = HashMap::new();
-
-            for header in raw_headers {
-                let sections: Vec<&str> = header.split(":").collect();
-                let field_name = sections.get(0);
-                let field_value = sections.get(1);
-
-                if let Some(field_name) = field_name {
-                    if let Some(field_value) = field_value {
-                        map.insert(
-                            field_name.to_string().split_whitespace().collect(),
-                            field_value.to_string().split_whitespace().collect(),
-                        );
-                    }
-                }
-            }
-
-            map
-        }
-
         // FIXME: This could be prettier
         if result.is_err() {
-            Err("Could not handle request")
+            return Err("Could not handle request");
         } else {
-            Ok(result.unwrap())
+            return Ok(result.unwrap());
         }
     }
+}
+
+fn parse_version(s: &String) -> String {
+    let fields: Vec<&str> = s.split_whitespace().collect();
+    fields.get(2).unwrap().to_string()
+}
+
+fn parse_path(s: &String) -> String {
+    let fields: Vec<&str> = s.split_whitespace().collect();
+    fields.get(1).unwrap().to_string()
+}
+
+fn parse_method(s: &String) -> Method {
+    let fields: Vec<&str> = s.split_whitespace().collect();
+    match fields.get(0).unwrap() {
+        &"GET" => Method::GET,
+        &"POST" => Method::POST,
+        &"PUT" => Method::PUT,
+        &"PATCH" => Method::PATCH,
+        &"DELETE" => Method::DELETE,
+        method => Method::UNKNOWN(method.to_string()),
+    }
+}
+
+/// Parses the body of a request
+fn parse_body(s: &String) -> String {
+    // RFC 7230 Section 3: Body begins after two CRLF (\r\n) sequences.
+    // See: https://tools.ietf.org/html/rfc7230#section-3
+    s.split("\r\n\r\n").skip(1).collect::<String>()
+}
+
+fn parse_headers(s: &String) -> HashMap<String, String> {
+    // RFC 7230 Section 3: Header section (start-line) ends, when two CRLF (\r\n) sequences are encountered.
+    // See: https://tools.ietf.org/html/rfc7230#section-3
+    let raw_header_section: &str = s.split("\r\n\r\n").nth(0).unwrap_or("");
+
+    // RFC 7230 Section 3.2: Each header is separated by one CRLF.
+    // See: https://tools.ietf.org/html/rfc7230#section-3.2
+    let raw_headers: Vec<&str> = raw_header_section.split("\r\n").skip(1).collect();
+    let mut map = HashMap::new();
+
+    for header in raw_headers {
+        let sections: Vec<&str> = header.split(":").collect();
+        let field_name = sections.get(0);
+        let field_value = sections.get(1);
+
+        if let Some(field_name) = field_name {
+            if let Some(field_value) = field_value {
+                map.insert(
+                    field_name.to_string().split_whitespace().collect(),
+                    field_value.to_string().split_whitespace().collect(),
+                );
+            }
+        }
+    }
+
+    map
 }
 
 /// Represents a HTTP response
