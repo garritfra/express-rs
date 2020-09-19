@@ -34,7 +34,7 @@ impl Request {
                 path: parse_path(&b),
                 version: parse_version(&b),
                 body: if body.is_empty() { None } else { Some(body) },
-                headers: parse_headers(&b),
+                headers: parse_headers(&b).unwrap(),
             }
         });
 
@@ -76,7 +76,7 @@ fn parse_body(s: &String) -> String {
     s.split("\r\n\r\n").skip(1).collect::<String>()
 }
 
-fn parse_headers(s: &String) -> HashMap<String, String> {
+fn parse_headers(s: &String) -> Result<HashMap<String, String>, &str> {
     // RFC 7230 Section 3: Header section (start-line) ends, when two CRLF (\r\n) sequences are encountered.
     // See: https://tools.ietf.org/html/rfc7230#section-3
     let raw_header_section: &str = s.split("\r\n\r\n").nth(0).unwrap_or("");
@@ -91,7 +91,21 @@ fn parse_headers(s: &String) -> HashMap<String, String> {
         let field_name = sections.get(0);
         let field_value = sections.get(1);
 
+        // RFC 7230 Section 3.2.4: Empty header names or fields render the request invalid.
+        // See: https://tools.ietf.org/html/rfc7230#section-3.2.4
+        if field_name.is_none() || field_value.is_none() {
+            return Err("Error while parsing request headers");
+        }
+
         if let Some(field_name) = field_name {
+            // RFC 7230 Section 3.2.4: No whitespace is allowed between the header field-name and colon.
+            // See: https://tools.ietf.org/html/rfc7230#section-3.2.4
+            if let Some(char_after_fieldname) = field_name.chars().last() {
+                if char_after_fieldname.is_whitespace() {
+                    return Err("No whitespace is allowed between the header field-name and colon");
+                }
+            }
+
             if let Some(field_value) = field_value {
                 map.insert(
                     field_name.to_string().split_whitespace().collect(),
@@ -101,7 +115,7 @@ fn parse_headers(s: &String) -> HashMap<String, String> {
         }
     }
 
-    map
+    Ok(map)
 }
 
 /// Represents a HTTP response

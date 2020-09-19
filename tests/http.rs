@@ -65,4 +65,14 @@ mod tests {
 
         assert_eq!(request.is_err(), true);
     }
+
+    /// Space between field-name and colon should render request invalid
+    #[test]
+    fn request_from_string_headers_space_after_fieldname() {
+        let string =
+            "GET / HTTP/1.1\r\nContent-Type : text/plain \r\n\r\nthis is the body".to_string();
+        let request = http::Request::from_string(string);
+
+        assert_eq!(request.is_err(), true);
+    }
 }
