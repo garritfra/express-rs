@@ -14,7 +14,7 @@ This crate emulates the behavior of the Express.js framework for Rust.
 
 ## Example
 
-See [./examples](./examples) for more examples
+See `examples` directory for more examples
 
 ```rust
 use express_rs::Express;
