@@ -66,11 +66,9 @@ impl Express {
             panic!("Port must be between 1-65535")
         }
 
-        let address = "0.0.0.0:".to_string() + &port.to_string();
-        let listener = match TcpListener::bind(address) {
-            Ok(l) => l,
-            Err(e) => panic!("Could not bind to port {port}: {e}", port = port, e = e),
-        };
+        let address = format!("0.0.0.0:{}", port);
+        let listener =
+            TcpListener::bind(address).expect(&format!("Could not bind to port {}", port));
 
         for stream in listener.incoming() {
             if let Ok(mut stream) = stream {
@@ -83,11 +81,10 @@ impl Express {
 
                 let mut response = Response::new();
                 if let Ok(request) = request {
-                    for mount in &mut self.mounts {
-                        if mount.path == request.path && mount.method == request.method {
-                            (mount.callback)(&request, &mut response);
-                        }
-                    }
+                    self.mounts
+                        .iter_mut()
+                        .filter(|mount| mount.matches(&request))
+                        .for_each(|mount| (mount.callback)(&request, &mut response));
                     if let Err(e) = stream.write("HTTP/1.1 200 OK\r\n\r\n".as_bytes()) {
                         println!("Could not write to response stream: {}", e)
                     }
@@ -123,5 +120,11 @@ impl Debug for Mount {
             .field("method", &self.method)
             .field("path", &self.path)
             .finish()
+    }
+}
+
+impl Mount {
+    fn matches(&self, other: &Request) -> bool {
+        self.method == other.method && self.path == other.path
     }
 }

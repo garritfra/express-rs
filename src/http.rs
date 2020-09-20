@@ -25,91 +25,95 @@ pub struct Request {
 }
 
 impl Request {
-    /// takes an request as string and parses all relevant fields
-    pub fn from_string(b: String) -> Result<Self, &'static str> {
-        let result = std::panic::catch_unwind(|| {
-            let body: String = parse_body(&b);
-            Request {
-                method: parse_method(&b),
-                path: parse_path(&b),
-                version: parse_version(&b),
-                body: if body.is_empty() { None } else { Some(body) },
-                headers: parse_headers(&b).unwrap(),
-            }
-        });
-
-        // FIXME: This could be prettier
-        if result.is_err() {
-            return Err("Could not handle request");
-        } else {
-            return Ok(result.unwrap());
-        }
+    /// takes a request as string and parses all relevant fields
+    pub fn from_string(s: String) -> Result<Self, &'static str> {
+        let fields = s.split_whitespace().collect::<Vec<_>>();
+        Ok(Request {
+            method: parse_method(&fields)?,
+            path: parse_path(&fields)?,
+            version: parse_version(&fields)?,
+            body: parse_body(&s),
+            headers: parse_headers(&s)?,
+        })
     }
 }
 
-fn parse_version(s: &String) -> String {
-    let fields: Vec<&str> = s.split_whitespace().collect();
-    fields.get(2).unwrap().to_string()
+fn parse_version(fields: &Vec<&str>) -> Result<String, &'static str> {
+    fields
+        .get(2)
+        .map(|&s| String::from(s))
+        .ok_or("Could not parse HTTP version")
 }
 
-fn parse_path(s: &String) -> String {
-    let fields: Vec<&str> = s.split_whitespace().collect();
-    fields.get(1).unwrap().to_string()
+fn parse_path(fields: &Vec<&str>) -> Result<String, &'static str> {
+    fields
+        .get(1)
+        .map(|&s| String::from(s))
+        .ok_or("Could not parse HTTP version")
 }
 
-fn parse_method(s: &String) -> Method {
-    let fields: Vec<&str> = s.split_whitespace().collect();
-    match fields.get(0).unwrap() {
-        &"GET" => Method::GET,
-        &"POST" => Method::POST,
-        &"PUT" => Method::PUT,
-        &"PATCH" => Method::PATCH,
-        &"DELETE" => Method::DELETE,
-        method => Method::UNKNOWN(method.to_string()),
+fn parse_method(fields: &Vec<&str>) -> Result<Method, &'static str> {
+    match fields.get(0).cloned() {
+        Some("GET") => Ok(Method::GET),
+        Some("POST") => Ok(Method::POST),
+        Some("PUT") => Ok(Method::PUT),
+        Some("PATCH") => Ok(Method::PATCH),
+        Some("DELETE") => Ok(Method::DELETE),
+        // FIXME: This will recognize things as HTTP methods that are not.
+        Some(method) => Ok(Method::UNKNOWN(method.to_string())),
+        None => Err("Could not parse HTTP method"),
     }
 }
 
 /// Parses the body of a request
-fn parse_body(s: &String) -> String {
+fn parse_body(s: &String) -> Option<String> {
     // RFC 7230 Section 3: Body begins after two CRLF (\r\n) sequences.
     // See: https://tools.ietf.org/html/rfc7230#section-3
-    s.split("\r\n\r\n").skip(1).collect::<String>()
+    let text = s.split("\r\n\r\n").skip(1).collect::<String>();
+    if text.is_empty() {
+        None
+    } else {
+        Some(text)
+    }
 }
 
-fn parse_headers(s: &String) -> Result<HashMap<String, String>, &str> {
+fn parse_headers(s: &String) -> Result<HashMap<String, String>, &'static str> {
     // RFC 7230 Section 3: Header section (start-line) ends, when two CRLF (\r\n) sequences are encountered.
     // See: https://tools.ietf.org/html/rfc7230#section-3
-    let raw_header_section: &str = s.split("\r\n\r\n").nth(0).unwrap_or("");
+    let raw_header_section = s.split("\r\n\r\n").nth(0).unwrap_or_default();
 
     // RFC 7230 Section 3.2: Each header is separated by one CRLF.
     // See: https://tools.ietf.org/html/rfc7230#section-3.2
-    let raw_headers: Vec<&str> = raw_header_section.split("\r\n").skip(1).collect();
+    let raw_headers = raw_header_section.split("\r\n").skip(1).collect::<Vec<_>>();
     let mut map = HashMap::new();
 
     for header in raw_headers {
-        let sections: Vec<&str> = header.split(":").collect();
+        let sections = header.split(":").collect::<Vec<_>>();
         let field_name = sections.get(0);
         let field_value = sections.get(1);
 
         // RFC 7230 Section 3.2.4: Empty header names or fields render the request invalid.
         // See: https://tools.ietf.org/html/rfc7230#section-3.2.4
-        if field_name.is_none() || field_value.is_none() {
-            return Err("Error while parsing request headers");
-        }
+        field_name
+            .and(field_value)
+            .ok_or("Error while parsing request headers")?;
 
         if let Some(field_name) = field_name {
             // RFC 7230 Section 3.2.4: No whitespace is allowed between the header field-name and colon.
             // See: https://tools.ietf.org/html/rfc7230#section-3.2.4
-            if let Some(char_after_fieldname) = field_name.chars().last() {
-                if char_after_fieldname.is_whitespace() {
-                    return Err("No whitespace is allowed between the header field-name and colon");
-                }
+            if field_name
+                .chars()
+                .last()
+                .filter(|c| c.is_whitespace())
+                .is_some()
+            {
+                Err("No whitespace is allowed between the header field-name and colon")?
             }
 
             if let Some(field_value) = field_value {
                 map.insert(
-                    field_name.to_string().split_whitespace().collect(),
-                    field_value.to_string().split_whitespace().collect(),
+                    field_name.split_whitespace().collect(),
+                    field_value.split_whitespace().collect(),
                 );
             }
         }
