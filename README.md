@@ -2,6 +2,8 @@
 
 This crate emulates the behavior of the Express.js framework for Rust.
 
+https://crates.io/crates/express-rs
+
 ## State of the Project
 
 - [x] Simple GET/POST/PUT/DELETE requests
