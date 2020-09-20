@@ -8,8 +8,8 @@ fn main() {
     });
 
     app.get("/redirect", |_, res| {
-        res.status(301);
-        res.send("This route has a redirect status code!".to_string())
+        res.status(301)
+            .send("This route has a redirect status code!".to_string())
     });
 
     app.listen(8080);

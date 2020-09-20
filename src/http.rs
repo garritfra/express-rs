@@ -152,8 +152,6 @@ impl Response {
 
     /// Change the status code of a response
     ///
-    /// TODO: Make this method chainable
-    ///
     /// # Examples
     ///
     /// ```
@@ -162,11 +160,11 @@ impl Response {
     /// let mut app = Express::new();
     ///
     /// app.get("/", |_, res| {
-    ///     res.status(301);
-    ///     res.send("This route has a custom status code".to_string())
+    ///     res.status(301).send("This route has a custom status code".to_string())
     /// });
     /// ```
-    pub fn status(&mut self, status: u16) {
-        self.status = status
+    pub fn status(&mut self, status: u16) -> &mut Self {
+        self.status = status;
+        self
     }
 }
