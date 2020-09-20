@@ -38,21 +38,21 @@ impl Request {
     }
 }
 
-fn parse_version(fields: &Vec<&str>) -> Result<String, &'static str> {
+fn parse_version(fields: &[&str]) -> Result<String, &'static str> {
     fields
         .get(2)
         .map(|&s| String::from(s))
         .ok_or("Could not parse HTTP version")
 }
 
-fn parse_path(fields: &Vec<&str>) -> Result<String, &'static str> {
+fn parse_path(fields: &[&str]) -> Result<String, &'static str> {
     fields
         .get(1)
         .map(|&s| String::from(s))
         .ok_or("Could not parse HTTP version")
 }
 
-fn parse_method(fields: &Vec<&str>) -> Result<Method, &'static str> {
+fn parse_method(fields: &[&str]) -> Result<Method, &'static str> {
     match fields.get(0).cloned() {
         Some("GET") => Ok(Method::GET),
         Some("POST") => Ok(Method::POST),
@@ -66,7 +66,7 @@ fn parse_method(fields: &Vec<&str>) -> Result<Method, &'static str> {
 }
 
 /// Parses the body of a request
-fn parse_body(s: &String) -> Option<String> {
+fn parse_body(s: &str) -> Option<String> {
     // RFC 7230 Section 3: Body begins after two CRLF (\r\n) sequences.
     // See: https://tools.ietf.org/html/rfc7230#section-3
     let text = s.split("\r\n\r\n").skip(1).collect::<String>();
@@ -77,10 +77,10 @@ fn parse_body(s: &String) -> Option<String> {
     }
 }
 
-fn parse_headers(s: &String) -> Result<HashMap<String, String>, &'static str> {
+fn parse_headers(s: &str) -> Result<HashMap<String, String>, &'static str> {
     // RFC 7230 Section 3: Header section (start-line) ends, when two CRLF (\r\n) sequences are encountered.
     // See: https://tools.ietf.org/html/rfc7230#section-3
-    let raw_header_section = s.split("\r\n\r\n").nth(0).unwrap_or_default();
+    let raw_header_section = s.split("\r\n\r\n").next().unwrap_or_default();
 
     // RFC 7230 Section 3.2: Each header is separated by one CRLF.
     // See: https://tools.ietf.org/html/rfc7230#section-3.2
@@ -88,7 +88,7 @@ fn parse_headers(s: &String) -> Result<HashMap<String, String>, &'static str> {
     let mut map = HashMap::new();
 
     for header in raw_headers {
-        let sections = header.split(":").collect::<Vec<_>>();
+        let sections = header.split(':').collect::<Vec<_>>();
         let field_name = sections.get(0);
         let field_value = sections.get(1);
 
@@ -107,7 +107,7 @@ fn parse_headers(s: &String) -> Result<HashMap<String, String>, &'static str> {
                 .filter(|c| c.is_whitespace())
                 .is_some()
             {
-                Err("No whitespace is allowed between the header field-name and colon")?
+                return Err("No whitespace is allowed between the header field-name and colon");
             }
 
             if let Some(field_value) = field_value {
@@ -127,6 +127,12 @@ fn parse_headers(s: &String) -> Result<HashMap<String, String>, &'static str> {
 pub struct Response {
     pub stream: String,
     pub headers: Vec<String>,
+}
+
+impl Default for Response {
+    fn default() -> Self {
+        Response::new()
+    }
 }
 
 impl Response {
