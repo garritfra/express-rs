@@ -85,11 +85,11 @@ impl Express {
                         .iter_mut()
                         .filter(|mount| mount.matches(&request))
                         .for_each(|mount| (mount.callback)(&request, &mut response));
-                    if let Err(e) = stream.write("HTTP/1.1 200 OK\r\n\r\n".as_bytes()) {
+                    if let Err(e) = stream.write(b"HTTP/1.1 200 OK\r\n\r\n") {
                         println!("Could not write to response stream: {}", e)
                     }
                 } else {
-                    if let Err(e) = stream.write("HTTP/1.1 400 Bad Request\r\n\r\n".as_bytes()) {
+                    if let Err(e) = stream.write(b"HTTP/1.1 400 Bad Request\r\n\r\n") {
                         println!("Could not write to response stream: {}", e)
                     }
                     println!("Request could not be handled");
