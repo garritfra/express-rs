@@ -127,6 +127,7 @@ fn parse_headers(s: &str) -> Result<HashMap<String, String>, &'static str> {
 pub struct Response {
     pub stream: String,
     pub headers: Vec<String>,
+    status: u16,
 }
 
 impl Default for Response {
@@ -140,11 +141,32 @@ impl Response {
         Self {
             stream: String::new(),
             headers: Vec::new(),
+            status: 200,
         }
     }
 
     /// Writes plain text to the response buffer
     pub fn send(&mut self, s: String) {
         self.stream.push_str(&s);
+    }
+
+    /// Change the status code of a response
+    ///
+    /// TODO: Make this method chainable
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use express_rs::Express;
+    ///
+    /// let mut app = Express::new();
+    ///
+    /// app.get("/", |_, res| {
+    ///     res.status(301);
+    ///     res.send("This route has a custom status code".to_string())
+    /// });
+    /// ```
+    pub fn status(&mut self, status: u16) {
+        self.status = status
     }
 }
