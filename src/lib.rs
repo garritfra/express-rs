@@ -107,6 +107,12 @@ impl Express {
     }
 }
 
+impl Default for Express {
+    fn default() -> Self {
+        Express::new()
+    }
+}
+
 /// Represents a path with a method.
 pub struct Mount {
     pub method: Method,
