@@ -26,7 +26,7 @@ macro_rules! define_method {
     ($func_name:ident, $method:expr) => {
         pub fn $func_name<F: 'static>(&mut self, path: &str, callback: F) -> &mut Self
         where
-            F: FnMut(&Request, &mut Response) -> (),
+            F: FnMut(&Request, &mut Response),
             Self: Sized,
         {
             let mount = Mount {
@@ -67,8 +67,8 @@ impl Express {
         }
 
         let address = format!("0.0.0.0:{}", port);
-        let listener =
-            TcpListener::bind(address).expect(&format!("Could not bind to port {}", port));
+        let listener = TcpListener::bind(address)
+            .unwrap_or_else(|_| panic!("Could not bind to port {}", port));
 
         for stream in listener.incoming() {
             if let Ok(mut stream) = stream {
@@ -117,7 +117,7 @@ impl Default for Express {
 pub struct Mount {
     pub method: Method,
     pub path: String,
-    pub callback: Box<dyn FnMut(&Request, &mut Response) -> ()>,
+    pub callback: Box<dyn FnMut(&Request, &mut Response)>,
 }
 
 impl Debug for Mount {
