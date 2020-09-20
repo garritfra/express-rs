@@ -127,7 +127,7 @@ fn parse_headers(s: &str) -> Result<HashMap<String, String>, &'static str> {
 pub struct Response {
     pub stream: String,
     pub headers: Vec<String>,
-    status: u16,
+    pub(crate) status: u16,
 }
 
 impl Default for Response {

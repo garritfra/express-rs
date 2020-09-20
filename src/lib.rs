@@ -85,7 +85,9 @@ impl Express {
                         .iter_mut()
                         .filter(|mount| mount.matches(&request))
                         .for_each(|mount| (mount.callback)(&request, &mut response));
-                    if let Err(e) = stream.write(b"HTTP/1.1 200 OK\r\n\r\n") {
+
+                    let response_text = format!("HTTP/1.1 {} OK\r\n\r\n", response.status);
+                    if let Err(e) = stream.write(response_text.as_bytes()) {
                         println!("Could not write to response stream: {}", e)
                     }
                 } else {
