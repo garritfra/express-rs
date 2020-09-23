@@ -1,3 +1,4 @@
+use crate::Mount;
 use std::collections::hash_map::HashMap;
 
 /// Common HTTP Methods
@@ -22,20 +23,49 @@ pub struct Request {
     pub version: String,
     pub body: Option<String>,
     pub headers: HashMap<String, String>,
+    pub params: HashMap<String, String>,
 }
 
 impl Request {
     /// takes a request as string and parses all relevant fields
-    pub fn from_string(s: String) -> Result<Self, &'static str> {
+    pub fn from_string(mounts: &mut std::vec::Vec<Mount>, s: String) -> Result<Self, &'static str> {
         let fields = s.split_whitespace().collect::<Vec<_>>();
+        let path = parse_path(&fields)?;
+        let method = parse_method(&fields)?;
+
+        let params = if let Some(current_mount) = mounts
+            .iter_mut()
+            .filter(|mount| mount.matches_path(&path))
+            .next()
+        {
+            parse_params(current_mount, &path)
+        } else {
+            HashMap::new()
+        };
+
         Ok(Request {
-            method: parse_method(&fields)?,
-            path: parse_path(&fields)?,
+            method: method,
+            path: path,
             version: parse_version(&fields)?,
             body: parse_body(&s),
             headers: parse_headers(&s)?,
+            params: params,
         })
     }
+}
+
+fn parse_params(mount: &Mount, path: &str) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    for (i, section) in mount.path.split("/").enumerate() {
+        if section.chars().next() == Some(':') {
+            map.insert(
+                section.chars().skip(1).collect::<String>(),
+                path.split("/").nth(i).unwrap().to_string(),
+            );
+        }
+    }
+
+    map
 }
 
 fn parse_version(fields: &[&str]) -> Result<String, &'static str> {

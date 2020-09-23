@@ -76,8 +76,10 @@ impl Express {
                 if let Err(e) = stream.read(&mut buffer) {
                     println!("Could not read to stream: {}", e)
                 }
-                let request =
-                    Request::from_string(String::from_utf8_lossy(&buffer[..]).to_string());
+                let request = Request::from_string(
+                    &mut self.mounts,
+                    String::from_utf8_lossy(&buffer[..]).to_string(),
+                );
 
                 let mut response = Response::new();
                 if let Ok(request) = request {
@@ -133,6 +135,14 @@ impl Debug for Mount {
 
 impl Mount {
     fn matches(&self, other: &Request) -> bool {
-        self.method == other.method && self.path == other.path
+        self.matches_path(&other.path) && self.method == other.method
+    }
+
+    fn matches_path(&self, path: &str) -> bool {
+        self.path == path
+    }
+
+    fn matches_method(&self, method: Method) -> bool {
+        self.method == method
     }
 }
