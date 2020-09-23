@@ -135,14 +135,14 @@ impl Debug for Mount {
 
 impl Mount {
     fn matches(&self, other: &Request) -> bool {
-        self.matches_path(&other.path) && self.method == other.method
+        self.matches_path(&other.path) && self.matches_method(&other.method)
     }
 
     fn matches_path(&self, path: &str) -> bool {
         self.path == path
     }
 
-    fn matches_method(&self, method: Method) -> bool {
-        self.method == method
+    fn matches_method(&self, method: &Method) -> bool {
+        &self.method == method
     }
 }
